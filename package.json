@@ -1,0 +1,35 @@
+{
+  "name": "lambda-pdf-core",
+  "version": "1.0.0",
+  "files": [
+    "src",
+    "index.js"
+  ],
+  "description": "This ist",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@git:audi-nemo-fe/lambda-pdf-core.git"
+  },
+  "keywords": [
+    "lambda",
+    "pdf",
+    "core",
+    "puppeteer"
+  ],
+  "author": "Franz Lacherbauer",
+  "license": "ISC",
+  "dependencies": {
+    "ajv": "^6.12.2",
+    "atob": "^2.1.2",
+    "chrome-aws-lambda": "^2.1.1",
+    "pdf-lib": "^1.5.0",
+    "puppeteer-core": "^3.0.2"
+  },
+  "devDependencies": {
+    "jest": "^26.0.1"
+  }
+}
