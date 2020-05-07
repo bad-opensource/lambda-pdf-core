@@ -23,6 +23,7 @@
   "author": "Franz Lacherbauer",
   "license": "ISC",
   "dependencies": {
+    "@pdf-lib/fontkit": "0.0.4",
     "ajv": "^6.12.2",
     "atob": "^2.1.2",
     "chrome-aws-lambda": "^2.1.1",
