@@ -82,7 +82,7 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchData, c
 		const pdf = require('./lib/pdf');
 
 		if (event.source === 'serverless-plugin-warmup') {
-			await pdf.getPdf('WarmUp - Lambda is warm!');
+			await pdf.getPdf('WarmUp - Lambda is warm!', {});
 			console.log('WarmUp - Lambda is warm!');
 			return 'Lambda is warm!';
 		}
