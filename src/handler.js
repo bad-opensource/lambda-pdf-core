@@ -95,9 +95,9 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchData, c
 
 		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
 
-		const generatedPdfData = await pdf.getPdf(mainTemplate, config);
+		const generatedPdfData = await pdf.getPdf(mainTemplate, configuration);
 
-		const fileName = ((patchedData.data && patchedData.data.fileName) || config.fileNameFallback || '').replace(' ', '');
+		const fileName = ((patchedData.data && patchedData.data.fileName) || configuration.fileNameFallback || '').replace(' ', '');
 		return pdf.getPdfResponse(generatedPdfData, fileName);
 	};
 
