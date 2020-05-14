@@ -25,36 +25,36 @@ module.exports.getPdf = async (htmlString, config) => {
 			printBackground: false,
 			displayHeaderFooter: false
 		});
-		return generatedPdf;
-		// const pdfDoc = await PDFDocument.create();
-		// pdfDoc.registerFontkit(fontkit);
-		// const originalPdf = await PDFDocument.load(generatedPdf);
-		// for (let i = 0; i < originalPdf.getPageCount(); i++) {
-		// 	const [aMainPage] = await pdfDoc.copyPages(originalPdf, [i]);
-		// 	pdfDoc.addPage(aMainPage);
+		// return generatedPdf;
+		const pdfDoc = await PDFDocument.create();
+		pdfDoc.registerFontkit(fontkit);
+		const originalPdf = await PDFDocument.load(generatedPdf);
+		for (let i = 0; i < originalPdf.getPageCount(); i++) {
+			const [aMainPage] = await pdfDoc.copyPages(originalPdf, [i]);
+			pdfDoc.addPage(aMainPage);
+		}
+		// let customFont = await pdfDoc.embedFont(fontBase64);
+		const pages = pdfDoc.getPages();
+		const {width} = pages[0].getSize();
+		let pageNumberOptions = {
+			x: width - 37,
+			y: 22.9,
+			size: 8.5,
+			color: rgb(0, 0, 0)
+		};
+		// if (customFont) {
+		// 	pageNumberOptions = {...pageNumberOptions, font: customFont};
 		// }
-		// // let customFont = await pdfDoc.embedFont(fontBase64);
-		// const pages = pdfDoc.getPages();
-		// const {width} = pages[0].getSize();
-		// let pageNumberOptions = {
-		// 	x: width - 37,
-		// 	y: 22.9,
-		// 	size: 8.5,
-		// 	color: rgb(0, 0, 0)
-		// };
-		// // if (customFont) {
-		// // 	pageNumberOptions = {...pageNumberOptions, font: customFont};
-		// // }
-		// pages.forEach((page, index) => {
-		// 	if (index) {
-		// 		let pageNumberIndent = index > 8 ? '' : '   ';
-		// 		page.drawText(pageNumberIndent + String(index + 1), pageNumberOptions);
-		// 	}
-		//
-		// });
-		// const pdfBytes = await pdfDoc.save();
-		// console.timeEnd('addPageNumber');
-		// return Buffer.from(pdfBytes);
+		pages.forEach((page, index) => {
+			if (index) {
+				let pageNumberIndent = index > 8 ? '' : '   ';
+				page.drawText(pageNumberIndent + String(index + 1), pageNumberOptions);
+			}
+
+		});
+		const pdfBytes = await pdfDoc.save();
+		console.timeEnd('addPageNumber');
+		return Buffer.from(pdfBytes);
 		// add page number
 
 

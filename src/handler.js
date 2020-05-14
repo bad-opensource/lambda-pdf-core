@@ -1,15 +1,9 @@
-module.exports = ({
-					  version,
-					  templates = {},
-					  helpers,
-					  mocks,
-					  schema,
-					  patchData
-				  }) => {
+module.exports = ({version, templates = {}, helpers, mocks, schema, patchData, config}) => {
+	const module = {};
 	const atob = require('atob');
 	const {validate} = require('./lib/validate');
 	const {getCompiledTemplate} = require('./lib/handlebars')({helpers, partials: templates.partials});
-	const module = {};
+	const configuration = config || {};
 
 	const parseData = (event) => {
 		let data = {};
@@ -100,10 +94,10 @@ module.exports = ({
 		const patchedData = patchData ? patchData(parsedData) : parsedData;
 
 		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
-		const footerTemplate = getCompiledTemplate(templates.footer, patchedData);
-		const headerTemplate = getCompiledTemplate(templates.header, patchedData);
+		// const footerTemplate = getCompiledTemplate(templates.footer, patchedData);
+		// const headerTemplate = getCompiledTemplate(templates.header, patchedData);
 
-		const generatedPdfData = await pdf.getPdf(mainTemplate, headerTemplate, footerTemplate);
+		const generatedPdfData = await pdf.getPdf(mainTemplate);
 
 		const fileName = ('filename' || '').replace(' ', '');
 		return pdf.getPdfResponse(generatedPdfData, fileName);
