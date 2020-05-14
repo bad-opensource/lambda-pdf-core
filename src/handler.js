@@ -81,6 +81,12 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchData, c
 	module.pdf = async event => {
 		const pdf = require('./lib/pdf');
 
+		if (event.source === 'serverless-plugin-warmup') {
+			await pdf.getPdf('WarmUp - Lambda is warm!');
+			console.log('WarmUp - Lambda is warm!');
+			return 'Lambda is warm!';
+		}
+
 		const parsedData = parseData(event);
 		if (!parsedData) {
 			return errorBody('No Data for parsedData');
