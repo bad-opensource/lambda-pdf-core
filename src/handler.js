@@ -94,12 +94,10 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchData, c
 		const patchedData = patchData ? patchData(parsedData) : parsedData;
 
 		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
-		// const footerTemplate = getCompiledTemplate(templates.footer, patchedData);
-		// const headerTemplate = getCompiledTemplate(templates.header, patchedData);
 
-		const generatedPdfData = await pdf.getPdf(mainTemplate);
+		const generatedPdfData = await pdf.getPdf(mainTemplate, config);
 
-		const fileName = ('filename' || '').replace(' ', '');
+		const fileName = ((patchedData.data && patchedData.data.fileName) || config.fileNameFallback || '').replace(' ', '');
 		return pdf.getPdfResponse(generatedPdfData, fileName);
 	};
 

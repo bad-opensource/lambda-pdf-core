@@ -2,12 +2,57 @@ const {PDFDocument, rgb} = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
 const chromium = require('chrome-aws-lambda');
 
-//TODO: der muss die config aus dem base projekt bekommen und verarbeiten ( font für font-link für asien,
-// pagenumberfont (in welcher form auch immer)
-// file name ???
+async function getPdfBytesWithPageNumbers(generatedPdf, config) {
+	const {
+		pageNumberTreshold,
+		pageNumberFontBase64,
+		customPageNumberOptions = {
+		right: 37,
+		bottom: 22.9,
+		size: 8.5
+	}} = config;
+
+	const pdfDoc = await PDFDocument.create();
+	pdfDoc.registerFontkit(fontkit);
+	const originalPdf = await PDFDocument.load(generatedPdf);
+
+	for (let i = 0; i < originalPdf.getPageCount(); i++) {
+		const [aMainPage] = await pdfDoc.copyPages(originalPdf, [i]);
+		pdfDoc.addPage(aMainPage);
+	}
+	let customFont;
+	if (pageNumberFontBase64){
+		customFont = await pdfDoc.embedFont(pageNumberFontBase64);
+	}
+
+	const pages = pdfDoc.getPages();
+	const {width} = pages[0].getSize();
+
+	let pageNumberOptions = {
+		x: width - customPageNumberOptions.right,
+		y: customPageNumberOptions.bottom,
+		size: customPageNumberOptions.size,
+		color: rgb(0, 0, 0)
+	};
+
+	if (customFont) {
+		pageNumberOptions = {...pageNumberOptions, font: customFont};
+	}
+
+	pages.forEach((page, index) => {
+		if (index >= pageNumberTreshold) {
+			// TODO: wtf?
+			let pageNumberIndent = index > 8 ? '' : '   ';
+			page.drawText(pageNumberIndent + String(index + 1), pageNumberOptions);
+		}
+	});
+	return pdfDoc.save();
+}
 
 module.exports.getPdf = async (htmlString, config) => {
-	// await chromium.font('https://rawcdn.githack.com/googlefonts/noto-cjk/be6c059ac1587e556e2412b27f5155c8eb3ddbe6/NotoSansCJK-Regular.ttc');
+	if (!!config.fallbackFontCdnUrl) {
+		await chromium.font(config.fallbackFontCdnUrl);
+	}
 	let browser;
 
 	try {
@@ -25,39 +70,11 @@ module.exports.getPdf = async (htmlString, config) => {
 			printBackground: false,
 			displayHeaderFooter: false
 		});
-		// return generatedPdf;
-		const pdfDoc = await PDFDocument.create();
-		pdfDoc.registerFontkit(fontkit);
-		const originalPdf = await PDFDocument.load(generatedPdf);
-		for (let i = 0; i < originalPdf.getPageCount(); i++) {
-			const [aMainPage] = await pdfDoc.copyPages(originalPdf, [i]);
-			pdfDoc.addPage(aMainPage);
+		if (!config.renderPageNumbers) {
+			return generatedPdf;
 		}
-		// let customFont = await pdfDoc.embedFont(fontBase64);
-		const pages = pdfDoc.getPages();
-		const {width} = pages[0].getSize();
-		let pageNumberOptions = {
-			x: width - 37,
-			y: 22.9,
-			size: 8.5,
-			color: rgb(0, 0, 0)
-		};
-		// if (customFont) {
-		// 	pageNumberOptions = {...pageNumberOptions, font: customFont};
-		// }
-		pages.forEach((page, index) => {
-			if (index) {
-				let pageNumberIndent = index > 8 ? '' : '   ';
-				page.drawText(pageNumberIndent + String(index + 1), pageNumberOptions);
-			}
-
-		});
-		const pdfBytes = await pdfDoc.save();
-		console.timeEnd('addPageNumber');
+		const pdfBytes = await getPdfBytesWithPageNumbers(generatedPdf, config);
 		return Buffer.from(pdfBytes);
-		// add page number
-
-
 	}
 	catch (e) {
 		console.log(e);
