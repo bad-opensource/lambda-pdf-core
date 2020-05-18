@@ -1,4 +1,4 @@
-module.exports = ({version, templates = {}, helpers, mocks, schema, patchData, config}) => {
+module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBeforeRendering, config}) => {
 	const module = {};
 	const atob = require('atob');
 	const {validate} = require('./lib/validate');
@@ -66,7 +66,7 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchData, c
 			return errorBody(JSON.stringify(errors));
 		}
 
-		const patchedData = patchData ? patchData(parsedData) : parsedData;
+		const patchedData = patchDataBeforeRendering ? patchDataBeforeRendering(parsedData) : parsedData;
 		const html = getCompiledTemplate(templates.main, patchedData);
 
 		return {
@@ -97,7 +97,7 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchData, c
 			return errorBody(JSON.stringify(errors));
 		}
 
-		const patchedData = patchData ? patchData(parsedData) : parsedData;
+		const patchedData = patchDataBeforeRendering ? patchDataBeforeRendering(parsedData) : parsedData;
 
 		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
 
