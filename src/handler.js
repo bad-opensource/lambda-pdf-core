@@ -1,9 +1,25 @@
 module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBeforeRendering, config, fetchCb}) => {
+	const pdf = require('./lib/pdf');
 	const module = {};
 	const atob = require('atob');
 	const {validate} = require('./lib/validate');
 	const {getCompiledTemplate} = require('./lib/handlebars')({helpers, partials: templates.partials});
 	const configuration = config || {};
+
+	async function handleWarmup() {
+		await pdf.getPdf('WarmUp - Lambda is warm!', {});
+		console.log('WarmUp - Lambda is warm!');
+		return 'Lambda is warm!';
+	}
+
+	async function returnPdf(getCompiledTemplate, templates, patchedData, configuration) {
+		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
+
+		const generatedPdfData = await pdf.getPdf(mainTemplate, configuration);
+
+		const fileName = ((patchedData.data && patchedData.data.fileName) || configuration.fileNameFallback || '').replace(' ', '');
+		return pdf.getPdfResponse(generatedPdfData, fileName);
+	}
 
 	const parseData = (event) => {
 		let data = {};
@@ -43,6 +59,25 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 		};
 	};
 
+	function returnHtml(patchedData) {
+		const html = getCompiledTemplate(templates.main, patchedData);
+
+		return {
+			statusCode: 200,
+			headers: {
+				'Content-Type': 'text/html'
+			},
+			body: html
+		};
+	}
+
+	async function createFetchResponse(isPdfPath, patchedData) {
+		if (isPdfPath) {
+			return await returnPdf(getCompiledTemplate, templates, {data: patchedData}, configuration);
+		}
+		return returnHtml({data: patchedData});
+	}
+
 	module.check = async () => {
 		const html = getCompiledTemplate(templates.check, {version});
 
@@ -67,24 +102,12 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 		}
 
 		const patchedData = patchDataBeforeRendering ? patchDataBeforeRendering(parsedData) : parsedData;
-		const html = getCompiledTemplate(templates.main, patchedData);
-
-		return {
-			statusCode: 200,
-			headers: {
-				'Content-Type': 'text/html'
-			},
-			body: html
-		};
+		return returnHtml(patchedData);
 	};
 
 	module.pdf = async event => {
-		const pdf = require('./lib/pdf');
-
 		if (event.source === 'serverless-plugin-warmup') {
-			await pdf.getPdf('WarmUp - Lambda is warm!', {});
-			console.log('WarmUp - Lambda is warm!');
-			return 'Lambda is warm!';
+			return await handleWarmup();
 		}
 
 		const parsedData = parseData(event);
@@ -99,26 +122,17 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 
 		const patchedData = patchDataBeforeRendering ? patchDataBeforeRendering(parsedData) : parsedData;
 
-		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
-
-		const generatedPdfData = await pdf.getPdf(mainTemplate, configuration);
-
-		const fileName = ((patchedData.data && patchedData.data.fileName) || configuration.fileNameFallback || '').replace(' ', '');
-		return pdf.getPdfResponse(generatedPdfData, fileName);
+		return await returnPdf(getCompiledTemplate, templates, patchedData, configuration);
 	};
 
 	module.fetch = async event => {
-		// TODO: Aufräumen
 		if (event.source === 'serverless-plugin-warmup') {
-			const pdf = require('./lib/pdf');
-			await pdf.getPdf('WarmUp - Lambda is warm!', {});
-			console.log('WarmUp - Lambda is warm!');
-			return 'Lambda is warm!';
+			return await handleWarmup();
 		}
 
 		const {param} = event.pathParameters || {};
 		const {queryStringParameters} = event;
-		const isPdfPath = (event.path ||'').includes('/pdf/');
+		const isPdfPath = (event.path ||'').includes('/pdf');
 
 		const fetchResponse =  await fetchCb(param, queryStringParameters, event);
 
@@ -133,22 +147,7 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 
 		const patchedData = patchDataBeforeRendering ? patchDataBeforeRendering(fetchResponse) : fetchResponse;
 
-		if (isPdfPath){
-			const pdf = require('./lib/pdf');
-			const mainTemplate = getCompiledTemplate(templates.main, {data: patchedData});
-			const generatedPdfData = await pdf.getPdf(mainTemplate, configuration);
-			const fileName = ((patchedData.data && patchedData.data.fileName) || configuration.fileNameFallback || '').replace(' ', '');
-			return pdf.getPdfResponse(generatedPdfData, fileName);
-		}
-		const html = getCompiledTemplate(templates.main, {data: patchedData});
-
-		return {
-			statusCode: 200,
-			headers: {
-				'Content-Type': 'text/html'
-			},
-			body: html
-		};
+		return await createFetchResponse(isPdfPath, patchedData);
 	};
 
 	return module;
