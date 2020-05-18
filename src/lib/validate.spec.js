@@ -1,7 +1,8 @@
 const {validate} = require('./validate');
 
 describe('validate module', () => {
-	const scheme = {
+	const schema = {
+		'type': 'object',
 		'properties': {
 			'value1': {'type': 'number'},
 			'value2': {'type': 'string'}
@@ -13,7 +14,7 @@ describe('validate module', () => {
 			value1: 1,
 			value2: "Foobar"
 		};
-		const {valid, errors} = validate({scheme, data});
+		const {valid, errors} = validate({schema, data});
 
 		expect(valid).toBeTruthy();
 		expect(errors).toBe(null);
@@ -24,7 +25,7 @@ describe('validate module', () => {
 			value1: "FooBarBaz",
 			value2: "Foobar"
 		};
-		const {valid, errors} = validate({scheme, data: data2});
+		const {valid, errors} = validate({schema, data: data2});
 
 		expect(valid).toBe(false);
 		expect(errors[0].message).toBe('should be number');

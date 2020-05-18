@@ -1,4 +1,4 @@
-module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBeforeRendering, config}) => {
+module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBeforeRendering, config, fetchCb}) => {
 	const module = {};
 	const atob = require('atob');
 	const {validate} = require('./lib/validate');
@@ -105,6 +105,10 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 
 		const fileName = ((patchedData.data && patchedData.data.fileName) || configuration.fileNameFallback || '').replace(' ', '');
 		return pdf.getPdfResponse(generatedPdfData, fileName);
+	};
+
+	module.fetch = async event => {
+		console.log(event);
 	};
 
 	return module;

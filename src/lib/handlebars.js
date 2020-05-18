@@ -8,6 +8,7 @@ module.exports = ({helpers = {}, partials = {}}) => {
 	Handlebars.registerPartial(partials);
 
 	const module = {};
+
 	module.getCompiledTemplate = (template, context) => {
 		if (context) {
 			const compiled = Handlebars.compile(template);

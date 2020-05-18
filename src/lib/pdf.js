@@ -41,8 +41,7 @@ async function getPdfBytesWithPageNumbers(generatedPdf, config) {
 
 	pages.forEach((page, index) => {
 		if (index >= pageNumberTreshold) {
-			// TODO: wtf?
-			let pageNumberIndent = index > 8 ? '' : '   ';
+			let pageNumberIndent = index > 8 ? '' : '   '; // indent single page numbers for correct right alignment
 			page.drawText(pageNumberIndent + String(index + 1), pageNumberOptions);
 		}
 	});
