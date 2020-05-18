@@ -108,7 +108,47 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 	};
 
 	module.fetch = async event => {
-		console.log(event);
+		// TODO: Aufräumen
+		if (event.source === 'serverless-plugin-warmup') {
+			const pdf = require('./lib/pdf');
+			await pdf.getPdf('WarmUp - Lambda is warm!', {});
+			console.log('WarmUp - Lambda is warm!');
+			return 'Lambda is warm!';
+		}
+
+		const {param} = event.pathParameters || {};
+		const {queryStringParameters} = event;
+		const isPdfPath = (event.path ||'').includes('/pdf/');
+
+		const fetchResponse =  await fetchCb(param, queryStringParameters, event);
+
+		if (!fetchResponse) {
+			return errorBody('No fetchResponse');
+		}
+
+		const {valid, errors} = validate({schema, data: fetchResponse});
+		if (valid !== true) {
+			return errorBody(JSON.stringify(errors));
+		}
+
+		const patchedData = patchDataBeforeRendering ? patchDataBeforeRendering(fetchResponse) : fetchResponse;
+
+		if (isPdfPath){
+			const pdf = require('./lib/pdf');
+			const mainTemplate = getCompiledTemplate(templates.main, {data: patchedData});
+			const generatedPdfData = await pdf.getPdf(mainTemplate, configuration);
+			const fileName = ((patchedData.data && patchedData.data.fileName) || configuration.fileNameFallback || '').replace(' ', '');
+			return pdf.getPdfResponse(generatedPdfData, fileName);
+		}
+		const html = getCompiledTemplate(templates.main, {data: patchedData});
+
+		return {
+			statusCode: 200,
+			headers: {
+				'Content-Type': 'text/html'
+			},
+			body: html
+		};
 	};
 
 	return module;
