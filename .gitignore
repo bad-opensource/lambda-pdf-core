@@ -2,3 +2,4 @@
 /.idea/
 .npmrc
 .DS_Store
+coverage/

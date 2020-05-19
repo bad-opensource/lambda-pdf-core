@@ -6,22 +6,22 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 	const {getCompiledTemplate} = require('./lib/handlebars')({helpers, partials: templates.partials});
 	const configuration = config || {};
 
-	async function handleWarmup() {
+	const handleWarmup = async () => {
 		await pdf.getPdf('WarmUp - Lambda is warm!', {});
 		console.log('WarmUp - Lambda is warm!');
 		return 'Lambda is warm!';
-	}
+	};
 
-	async function returnPdf(getCompiledTemplate, templates, patchedData, configuration) {
+	const returnPdf = async (getCompiledTemplate, templates, patchedData, configuration) => {
 		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
 
 		const generatedPdfData = await pdf.getPdf(mainTemplate, configuration);
 
 		const fileName = ((patchedData.data && patchedData.data.fileName) || configuration.fileNameFallback || '').replace(' ', '');
 		return pdf.getPdfResponse(generatedPdfData, fileName);
-	}
+	};
 
-	const parseData = (event) => {
+	const parseEventData = event => {
 		let data = {};
 
 		try {
@@ -31,11 +31,10 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 			if (typeof event.body === 'string') {
 				try {
 					if (event.isBase64Encoded) {
-						console.log('Decode base64');
-						data = JSON.parse(atob(event.body));
+						const decoded = atob(event.body);
+						data = JSON.parse(decoded);
 					}
 					else {
-						console.log('Got JSON string -> parse');
 						data = JSON.parse(event.body) || null;
 					}
 				}
@@ -48,7 +47,6 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 				data = event.body || null;
 			}
 		}
-
 		return {data};
 	};
 
@@ -59,8 +57,8 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 		};
 	};
 
-	function returnHtml(patchedData) {
-		const html = getCompiledTemplate(templates.main, patchedData);
+	const returnHtml = (templateData) => {
+		const html = getCompiledTemplate(templates.main, templateData);
 
 		return {
 			statusCode: 200,
@@ -69,14 +67,14 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 			},
 			body: html
 		};
-	}
+	};
 
-	async function createFetchResponse(isPdfPath, patchedData) {
+	const createFetchResponse = async (isPdfPath, patchedData) => {
 		if (isPdfPath) {
-			return await returnPdf(getCompiledTemplate, templates, {data: patchedData}, configuration);
+			return returnPdf(getCompiledTemplate, templates, {data: patchedData}, configuration);
 		}
 		return returnHtml({data: patchedData});
-	}
+	};
 
 	module.check = async () => {
 		const html = getCompiledTemplate(templates.check, {version});
@@ -91,8 +89,8 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 	};
 
 	module.html = async event => {
-		const parsedData = parseData(event);
-		if (!parsedData) {
+		const parsedData = parseEventData(event);
+		if (!parsedData.data) {
 			return errorBody('No parsedData');
 		}
 
@@ -110,8 +108,8 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 			return await handleWarmup();
 		}
 
-		const parsedData = parseData(event);
-		if (!parsedData) {
+		const parsedData = parseEventData(event);
+		if (!parsedData.data) {
 			return errorBody('No Data for parsedData');
 		}
 

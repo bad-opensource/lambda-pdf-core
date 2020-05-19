@@ -4,13 +4,14 @@ const chromium = require('chrome-aws-lambda');
 
 async function getPdfBytesWithPageNumbers(generatedPdf, config) {
 	const {
-		pageNumberTreshold,
+		pageNumberTreshold = 0,
 		pageNumberFontBase64,
 		customPageNumberOptions = {
-		right: 37,
-		bottom: 22.9,
-		size: 8.5
-	}} = config;
+			right: 37,
+			bottom: 22.9,
+			size: 8.5
+		}
+	} = config;
 
 	const pdfDoc = await PDFDocument.create();
 	pdfDoc.registerFontkit(fontkit);
@@ -21,7 +22,7 @@ async function getPdfBytesWithPageNumbers(generatedPdf, config) {
 		pdfDoc.addPage(aMainPage);
 	}
 	let customFont;
-	if (pageNumberFontBase64){
+	if (pageNumberFontBase64) {
 		customFont = await pdfDoc.embedFont(pageNumberFontBase64);
 	}
 
@@ -40,12 +41,23 @@ async function getPdfBytesWithPageNumbers(generatedPdf, config) {
 	}
 
 	pages.forEach((page, index) => {
-		if (index >= pageNumberTreshold) {
+		if (index >= (pageNumberTreshold || 0)) {
 			let pageNumberIndent = index > 8 ? '' : '   '; // indent single page numbers for correct right alignment
 			page.drawText(pageNumberIndent + String(index + 1), pageNumberOptions);
 		}
 	});
 	return pdfDoc.save();
+}
+
+function toArrayBuffer(buffer) {
+	const arrayBuf = new ArrayBuffer(buffer.length);
+	const view = new Uint8Array(arrayBuf);
+
+	for (let i = 0; i < buffer.length; ++i) {
+		view[i] = buffer[i];
+	}
+
+	return arrayBuf;
 }
 
 module.exports.getPdf = async (htmlString, config) => {
@@ -72,7 +84,7 @@ module.exports.getPdf = async (htmlString, config) => {
 		if (!config.renderPageNumbers) {
 			return generatedPdf;
 		}
-		const pdfBytes = await getPdfBytesWithPageNumbers(generatedPdf, config);
+		const pdfBytes = await getPdfBytesWithPageNumbers(toArrayBuffer(generatedPdf), config);
 		return Buffer.from(pdfBytes);
 	}
 	catch (e) {
