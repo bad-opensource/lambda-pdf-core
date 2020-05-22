@@ -1,62 +1,18 @@
 module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBeforeRendering, config, fetchCb}) => {
 	const pdf = require('./lib/pdf');
 	const module = {};
-	const atob = require('atob');
-	const {validate} = require('./lib/validate');
 	const {getCompiledTemplate} = require('./lib/handlebars')({helpers, partials: templates.partials});
-	const configuration = config || {};
+	const {pipe, parseEventData, showError} = require('./lib/utils');
 
-	const pipe = (...functions) => input => functions.reduce((composition, nextFunction) => composition.then(nextFunction), Promise.resolve(input));
-
-	const handlePassThrough = func => input => {
+	const addPassThroughHandling = func => input => {
 		if (input.statusCode === 500 || input === 'Lambda is warm!') {
 			return input; // pass through
 		}
 		return func(input)
 	};
 
-	const handlePdfWarmUp = async () => {
-		await pdf.getPdf('WarmUp - Lambda is warm!', {});
-		return 'Lambda is warm!';
-	};
-
-	const parseEventData = event => {
-		let data = {};
-
-		try {
-			data = mocks[event.pathParameters.mock];
-		}
-		catch (e) {
-			if (typeof event.body === 'string') {
-				try {
-					if (event.isBase64Encoded) {
-						const decoded = atob(event.body);
-						data = JSON.parse(decoded);
-					}
-					else {
-						data = JSON.parse(event.body) || null;
-					}
-				}
-				catch (e) {
-					console.log(e);
-					data = null;
-				}
-			}
-			else {
-				data = event.body || null;
-			}
-		}
-		return {data};
-	};
-
-	const errorBody = (message = '') => {
-		return {
-			statusCode: 500,
-			body: message
-		};
-	};
-
-	const returnPdf = handlePassThrough(async patchedData => {
+	const returnPdf = addPassThroughHandling(async patchedData => {
+		const configuration = config || {};
 		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
 
 		const generatedPdfData = await pdf.getPdf(mainTemplate, configuration);
@@ -65,7 +21,7 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 		return pdf.getPdfResponse(generatedPdfData, fileName);
 	});
 
-	const returnHtml = handlePassThrough(templateData => {
+	const returnHtml = addPassThroughHandling(templateData => {
 
 		const html = getCompiledTemplate(templates.main, templateData);
 
@@ -78,43 +34,43 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 		};
 	});
 
-	const withParser = handlePassThrough(event => {
+	const parse = addPassThroughHandling(event => {
 		const parsedData = parseEventData(event);
 		if (!parsedData.data) {
-			return errorBody('Could not parse data');
+			return showError('Could not parse data');
 		}
 		return parsedData;
 	});
 
-	const withValidator = handlePassThrough(input => {
+	const validate = addPassThroughHandling(input => {
+		const {validate} = require('./lib/validate');
 		const {valid, errors} = validate({schema, data: input.data});
 		if (valid !== true) {
-			return errorBody(JSON.stringify(errors));
+			return showError(JSON.stringify(errors));
 		}
 		return input;
 	});
 
-	const withWarmUp = handlePassThrough(async event => {
+	const warmUp = addPassThroughHandling(async event => {
 		if (event.source === 'serverless-plugin-warmup') {
 			if ((event.path || '').includes('/pdf')) {
-				return await handlePdfWarmUp();
+				return await pdf.handleWarmUp();
 			}
 			return 'Lambda is warm!';
 		}
 		return event;
 	});
 
-	const withDataPatcher = handlePassThrough(input => patchDataBeforeRendering ? patchDataBeforeRendering(input) : input);
+	const patchData = addPassThroughHandling(input => patchDataBeforeRendering ? patchDataBeforeRendering(input) : input);
 
-	const withFetchResponse = handlePassThrough(async (event) => {
-
+	const fetchData = addPassThroughHandling(async event => {
 		const {param} = event.pathParameters || {};
 		const {queryStringParameters} = event;
 
 		const data = await fetchCb(param, queryStringParameters, event);
 
 		if (!data) {
-			return errorBody('No fetchResponse');
+			return showError('No fetchResponse');
 		}
 		return {data};
 	});
@@ -131,11 +87,10 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 			body: html
 		};
 	};
-	module.html = async event => pipe(withWarmUp, withParser, withValidator, withDataPatcher, returnHtml)(event);
-	module.pdf = async event => pipe(withWarmUp, withParser, withValidator, withDataPatcher, returnPdf)(event);
-	module.fetchHtml = async event => pipe(withWarmUp, withFetchResponse, withValidator, withDataPatcher, returnHtml)(event);
-	module.fetchPdf = async event => pipe(withWarmUp, withFetchResponse, withValidator, withDataPatcher, returnPdf)(event);
-
+	module.html = async event => pipe(warmUp, parse, validate, patchData, returnHtml)(event);
+	module.pdf = async event => pipe(warmUp, parse, validate, patchData, returnPdf)(event);
+	module.fetchHtml = async event => pipe(warmUp, fetchData, validate, patchData, returnHtml)(event);
+	module.fetchPdf = async event => pipe(warmUp, fetchData, validate, patchData, returnPdf)(event);
 
 	return module;
 };

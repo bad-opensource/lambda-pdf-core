@@ -2,7 +2,7 @@ const {PDFDocument, rgb} = require('pdf-lib');
 const fontkit = require('@pdf-lib/fontkit');
 const chromium = require('chrome-aws-lambda');
 
-async function getPdfBytesWithPageNumbers(generatedPdf, config) {
+const getPdfBytesWithPageNumbers =  async (generatedPdf, config) => {
 	const {
 		pageNumberTreshold = 0,
 		pageNumberFontBase64,
@@ -47,9 +47,9 @@ async function getPdfBytesWithPageNumbers(generatedPdf, config) {
 		}
 	});
 	return pdfDoc.save();
-}
+};
 
-function toArrayBuffer(buffer) {
+const toArrayBuffer = (buffer) => {
 	const arrayBuf = new ArrayBuffer(buffer.length);
 	const view = new Uint8Array(arrayBuf);
 
@@ -58,7 +58,12 @@ function toArrayBuffer(buffer) {
 	}
 
 	return arrayBuf;
-}
+};
+
+module.exports.handleWarmUp = async () => {
+	await module.exports.getPdf('WarmUp - Lambda is warm!', {});
+	return 'Lambda is warm!';
+};
 
 module.exports.getPdf = async (htmlString, config) => {
 	if (!!config.fallbackFontCdnUrl) {
