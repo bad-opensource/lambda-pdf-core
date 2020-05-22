@@ -1,6 +1,6 @@
 const pipe = (...functions) => input => functions.reduce(async (composition, nextFunction) => nextFunction(await composition), input);
 
-const parseEventData = event => {
+const parseEventData = (event, mocks) => {
 	const atob = require('atob');
 	let data = {};
 

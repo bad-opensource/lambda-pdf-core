@@ -35,7 +35,7 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 	});
 
 	const parse = addPassThroughHandling(event => {
-		const parsedData = parseEventData(event);
+		const parsedData = parseEventData(event, mocks);
 		if (!parsedData.data) {
 			return showError('Could not parse data');
 		}
