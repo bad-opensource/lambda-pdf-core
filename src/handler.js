@@ -6,19 +6,18 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 	const {getCompiledTemplate} = require('./lib/handlebars')({helpers, partials: templates.partials});
 	const configuration = config || {};
 
-	const handleWarmup = async () => {
-		await pdf.getPdf('WarmUp - Lambda is warm!', {});
-		console.log('WarmUp - Lambda is warm!');
-		return 'Lambda is warm!';
+	const pipe = (...functions) => input => functions.reduce((composition, nextFunction) => composition.then(nextFunction), Promise.resolve(input));
+
+	const handlePassThrough = func => input => {
+		if (input.statusCode === 500 || input === 'Lambda is warm!') {
+			return input; // pass through
+		}
+		return func(input)
 	};
 
-	const returnPdf = async (getCompiledTemplate, templates, patchedData, configuration) => {
-		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
-
-		const generatedPdfData = await pdf.getPdf(mainTemplate, configuration);
-
-		const fileName = ((patchedData.data && patchedData.data.fileName) || configuration.fileNameFallback || '').replace(' ', '');
-		return pdf.getPdfResponse(generatedPdfData, fileName);
+	const handlePdfWarmUp = async () => {
+		await pdf.getPdf('WarmUp - Lambda is warm!', {});
+		return 'Lambda is warm!';
 	};
 
 	const parseEventData = event => {
@@ -57,7 +56,17 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 		};
 	};
 
-	const returnHtml = (templateData) => {
+	const returnPdf = handlePassThrough(async patchedData => {
+		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
+
+		const generatedPdfData = await pdf.getPdf(mainTemplate, configuration);
+
+		const fileName = ((patchedData.data && patchedData.data.fileName) || configuration.fileNameFallback || '').replace(' ', '');
+		return pdf.getPdfResponse(generatedPdfData, fileName);
+	});
+
+	const returnHtml = handlePassThrough(templateData => {
+
 		const html = getCompiledTemplate(templates.main, templateData);
 
 		return {
@@ -67,15 +76,50 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 			},
 			body: html
 		};
-	};
+	});
 
-	const createFetchResponse = async (isPdfPath, patchedData) => {
-		if (isPdfPath) {
-			return returnPdf(getCompiledTemplate, templates, {data: patchedData}, configuration);
+	const withParser = handlePassThrough(event => {
+		const parsedData = parseEventData(event);
+		if (!parsedData.data) {
+			return errorBody('Could not parse data');
 		}
-		return returnHtml({data: patchedData});
-	};
+		return parsedData;
+	});
 
+	const withValidator = handlePassThrough(input => {
+		const {valid, errors} = validate({schema, data: input.data});
+		if (valid !== true) {
+			return errorBody(JSON.stringify(errors));
+		}
+		return input;
+	});
+
+	const withWarmUp = handlePassThrough(async event => {
+		if (event.source === 'serverless-plugin-warmup') {
+			if ((event.path || '').includes('/pdf')) {
+				return await handlePdfWarmUp();
+			}
+			return 'Lambda is warm!';
+		}
+		return event;
+	});
+
+	const withDataPatcher = handlePassThrough(input => patchDataBeforeRendering ? patchDataBeforeRendering(input) : input);
+
+	const withFetchResponse = handlePassThrough(async (event) => {
+
+		const {param} = event.pathParameters || {};
+		const {queryStringParameters} = event;
+
+		const data = await fetchCb(param, queryStringParameters, event);
+
+		if (!data) {
+			return errorBody('No fetchResponse');
+		}
+		return {data};
+	});
+
+	// Exported Lambda functions
 	module.check = async () => {
 		const html = getCompiledTemplate(templates.check, {version});
 
@@ -87,68 +131,11 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 			body: html
 		};
 	};
+	module.html = async event => pipe(withWarmUp, withParser, withValidator, withDataPatcher, returnHtml)(event);
+	module.pdf = async event => pipe(withWarmUp, withParser, withValidator, withDataPatcher, returnPdf)(event);
+	module.fetchHtml = async event => pipe(withWarmUp, withFetchResponse, withValidator, withDataPatcher, returnHtml)(event);
+	module.fetchPdf = async event => pipe(withWarmUp, withFetchResponse, withValidator, withDataPatcher, returnPdf)(event);
 
-	module.html = async event => {
-		const parsedData = parseEventData(event);
-		if (!parsedData.data) {
-			return errorBody('No parsedData');
-		}
-
-		const {valid, errors} = validate({schema, data: parsedData.data});
-		if (valid !== true) {
-			return errorBody(JSON.stringify(errors));
-		}
-
-		const patchedData = patchDataBeforeRendering ? patchDataBeforeRendering(parsedData) : parsedData;
-		return returnHtml(patchedData);
-	};
-
-	module.pdf = async event => {
-		if (event.source === 'serverless-plugin-warmup') {
-			return await handleWarmup();
-		}
-
-		const parsedData = parseEventData(event);
-		if (!parsedData.data) {
-			return errorBody('No Data for parsedData');
-		}
-
-		const {valid, errors} = validate({schema, data: parsedData.data});
-		if (valid !== true) {
-			return errorBody(JSON.stringify(errors));
-		}
-
-		const patchedData = patchDataBeforeRendering ? patchDataBeforeRendering(parsedData) : parsedData;
-
-		return await returnPdf(getCompiledTemplate, templates, patchedData, configuration);
-	};
-
-	module.fetch = async event => {
-		if (event.source === 'serverless-plugin-warmup') {
-			return await handleWarmup();
-		}
-
-		const {param} = event.pathParameters || {};
-		const {queryStringParameters} = event;
-		const isPdfPath = (event.path ||'').includes('/pdf');
-
-		const fetchResponse =  await fetchCb(param, queryStringParameters, event);
-
-		if (!fetchResponse) {
-			return errorBody('No fetchResponse');
-		}
-
-		const {valid, errors} = validate({schema, data: fetchResponse});
-		if (valid !== true) {
-			return errorBody(JSON.stringify(errors));
-		}
-
-		const patchedData = patchDataBeforeRendering ? patchDataBeforeRendering(fetchResponse) : fetchResponse;
-
-		return await createFetchResponse(isPdfPath, patchedData);
-	};
 
 	return module;
 };
-
-

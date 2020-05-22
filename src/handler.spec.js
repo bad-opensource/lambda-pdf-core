@@ -67,7 +67,7 @@ describe('handler module', () => {
 				isBase64Encoded: false
 			};
 			const result = await handler.html(event);
-			expect(result.body).toBe("No parsedData");
+			expect(result.body).toBe("Could not parse data");
 			expect(result.statusCode).toBe(500);
 		});
 
@@ -79,17 +79,26 @@ describe('handler module', () => {
 			const result = await handler.html(event);
 			expect(result.body).toBe("[{\"keyword\":\"type\",\"dataPath\":\".foo\",\"schemaPath\":\"#/properties/foo/type\",\"params\":{\"type\":\"string\"},\"message\":\"should be string\"}]");
 		});
-	});
 
-	describe('pdf handler function', () => {
-		it('should call warmup function when event.source is serverless-plugin-warmup', async () => {
+		it('should call pdf warmup function when event.source is serverless-plugin-warmup and path contains /pdf', async () => {
 			const event = {
-				source: 'serverless-plugin-warmup'
+				source: 'serverless-plugin-warmup',
+				path: '/pdf'
 			};
 			const result = await handler.pdf(event);
 			expect(result).toBe("Lambda is warm!");
 		});
 
+		it('should call standard warmup function when event.source is serverless-plugin-warmup', async () => {
+			const event = {
+				source: 'serverless-plugin-warmup'
+			};
+			const result = await handler.html(event);
+			expect(result).toBe("Lambda is warm!");
+		});
+	});
+
+	describe('pdf handler function', () => {
 		it('should return statusCode 200 when pdf is returned', async () => {
 			const event = {
 				body: '{"foo": "bar baz"}',
@@ -116,24 +125,16 @@ describe('handler module', () => {
 	});
 
 	describe('fetch handler function', () => {
-		it('should call warmup function when event.source is serverless-plugin-warmup', async () => {
-			const event = {
-				source: 'serverless-plugin-warmup'
-			};
-			const result = await handler.fetch(event);
-			expect(result).toBe("Lambda is warm!");
-		});
-
 		it('should return error body when fetchCb does not return data', async () => {
 			const event = {};
-			const result = await handler.fetch(event);
+			const result = await handler.fetchHtml(event);
 			expect(result.statusCode).toBe(500);
 		});
 
 		it('should return status 200 for html path', async () => {
 			const event = {};
 			fetchReturnValue = {"foo": "bar baz"};
-			const result = await handler.fetch(event);
+			const result = await handler.fetchHtml(event);
 			expect(result.statusCode).toBe(200);
 		});
 
@@ -142,17 +143,16 @@ describe('handler module', () => {
 				path: '/pdf'
 			};
 			fetchReturnValue = {"foo": "bar baz"};
-			const result = await handler.fetch(event);
+			const result = await handler.fetchPdf(event);
 			expect(result.statusCode).toBe(200);
 		});
 
 		it('should return error body when data isnt valid with schema', async () => {
 			const event = {};
 			fetchReturnValue = {"foo": 1};
-			const result = await handler.fetch(event);
+			const result = await handler.fetchPdf(event);
 			expect(result.statusCode).toBe(500);
 		});
 
 	});
-
 });
