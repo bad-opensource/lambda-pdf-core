@@ -1,7 +1,14 @@
+const atob = require('atob');
+
 const pipe = (...functions) => input => functions.reduce(async (composition, nextFunction) => nextFunction(await composition), input);
 
+function b64DecodeUnicode(str) {
+	return decodeURIComponent(atob(str).split('').map(c => {
+		return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+	}).join(''));
+}
+
 const parseEventData = (event, mocks) => {
-	const atob = require('atob');
 	let data = {};
 
 	try {
@@ -11,7 +18,7 @@ const parseEventData = (event, mocks) => {
 		if (typeof event.body === 'string') {
 			try {
 				if (event.isBase64Encoded) {
-					const decoded = atob(event.body);
+					const decoded = b64DecodeUnicode(event.body);
 					data = JSON.parse(decoded);
 				}
 				else {
