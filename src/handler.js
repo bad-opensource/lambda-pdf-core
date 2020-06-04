@@ -53,10 +53,7 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 
 	const warmUp = addPassThroughHandling(async event => {
 		if (event.source === 'serverless-plugin-warmup') {
-			if ((event.path || '').includes('/pdf')) {
-				return await pdf.handleWarmUp();
-			}
-			return 'Lambda is warm!';
+			return pdf.handleWarmUp();
 		}
 		return event;
 	});
