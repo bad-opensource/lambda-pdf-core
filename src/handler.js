@@ -14,8 +14,10 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 	const returnPdf = addPassThroughHandling(async patchedData => {
 		const configuration = config || {};
 		const mainTemplate = getCompiledTemplate(templates.main, patchedData);
+		const headerTemplate = getCompiledTemplate(templates.header, patchedData);
+		const footerTemplate = getCompiledTemplate(templates.footer, patchedData);
 
-		const generatedPdfData = await pdf.getPdf(mainTemplate, configuration);
+		const generatedPdfData = await pdf.getPdf(mainTemplate, configuration, headerTemplate, footerTemplate);
 
 		const fileName = ((patchedData.data && patchedData.data.fileName) || configuration.fileNameFallback || '').replace(' ', '');
 		return pdf.getPdfResponse(generatedPdfData, fileName);
