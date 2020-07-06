@@ -1,6 +1,6 @@
 {
   "name": "@dbad/lambda-pdf-core",
-  "version": "0.9.6",
+  "version": "0.9.7",
   "publishConfig": {
     "registry": "https://nexus.intern.dasburo.com/content/repositories/BAD-npm/"
   },
