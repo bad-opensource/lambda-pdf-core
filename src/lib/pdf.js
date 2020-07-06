@@ -6,6 +6,43 @@ module.exports.handleWarmUp = async () => {
 	return 'Lambda is warm!';
 };
 
+async function getCombinedPdf(page, basicOptions, config) {
+	const firstPageBuffer = await page.pdf({
+		...basicOptions,
+		displayHeaderFooter: false,
+		margin: {
+			top: 0,
+			right: config.margin.right ? config.margin.right : '1cm',
+			bottom: 0,
+			left: config.margin.left ? config.margin.left : '1cm'
+		},
+		pageRanges: '1'
+	});
+
+	const otherPagesBuffer = await page.pdf({
+		...basicOptions,
+		pageRanges: '2-'
+	});
+
+	const combinedPdf = await PDFDocument.create();
+
+	const [firstPagePdf, otherPagesPdf] = await Promise.all([PDFDocument.load(firstPageBuffer), PDFDocument.load(otherPagesBuffer)]);
+
+
+	const [firstPage] = await combinedPdf.copyPages(firstPagePdf, [0]);
+	combinedPdf.addPage(firstPage);
+
+	const otherPagesPromises = [];
+	for (let i = 0; i < otherPagesPdf.getPageCount(); i++) {
+		otherPagesPromises.push(combinedPdf.copyPages(otherPagesPdf, [i]));
+	}
+	const pages = await Promise.all(otherPagesPromises);
+	pages.forEach(page => {combinedPdf.addPage(page[0])})
+
+	const pdfBytes = await combinedPdf.save();
+	return Buffer.from(pdfBytes);
+}
+
 module.exports.getPdf = async (htmlString, config, header = '', footer = '') => {
 	if (!!config.fallbackFontCdnUrl) {
 		await chromium.font(config.fallbackFontCdnUrl);
@@ -21,7 +58,6 @@ module.exports.getPdf = async (htmlString, config, header = '', footer = '') => 
 		});
 		const page = await browser.newPage();
 		await page.setContent(htmlString);
-		let generatedPdf;
 		const basicOptions = {
 			format: 'A4',
 			printBackground: false,
@@ -30,43 +66,14 @@ module.exports.getPdf = async (htmlString, config, header = '', footer = '') => 
 			footerTemplate: footer,
 			margin: config.margin ? config.margin : '1cm'
 		};
-		if (config.firstPageNoHeaderFooter) {
-			const firstPageBuffer = await page.pdf({
-				...basicOptions,
-				displayHeaderFooter: false,
-				margin: {
-					top: 0,
-					right: config.margin.right ? config.margin.right : '1cm',
-					bottom: 0,
-					left: config.margin.left ? config.margin.left : '1cm'
-				},
-				pageRanges: '1'
-			});
-			const otherPagesBuffer = await page.pdf({
-				...basicOptions,
-				pageRanges: '2-'
-			});
-
-			const combinedPdf = await PDFDocument.create();
-
-			const firstPagePdf = await PDFDocument.load(firstPageBuffer);
-			const [firstPage] = await combinedPdf.copyPages(firstPagePdf, [0]);
-			combinedPdf.addPage(firstPage);
-
-			const otherPagesPdf = await PDFDocument.load(otherPagesBuffer);
-			for (let i = 0; i < otherPagesPdf.getPageCount(); i++) {
-				const [anotherPage] = await combinedPdf.copyPages(otherPagesPdf, [i]);
-				combinedPdf.addPage(anotherPage);
-			}
-			const pdfBytes = await combinedPdf.save();
-			generatedPdf = Buffer.from(pdfBytes);
+		if (config.differentCoverLetter) {
+			return await getCombinedPdf(page, basicOptions, config);
 		}
 		else {
-			generatedPdf = await page.pdf({
+			return await page.pdf({
 				...basicOptions,
 			});
 		}
-		return generatedPdf;
 	}
 	catch (e) {
 		console.log(e);
