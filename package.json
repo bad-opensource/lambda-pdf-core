@@ -1,8 +1,8 @@
 {
-  "name": "@dbad/lambda-pdf-core",
+  "name": "@das-buro-am-draht/lambda-pdf-core-test",
   "version": "0.9.7",
   "publishConfig": {
-    "registry": "https://nexus.intern.dasburo.com/content/repositories/BAD-npm/"
+    "registry": "https://github.com/das-buro-am-draht/lambda-pdf-core-test"
   },
   "files": [
     "src",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@git:audi-nemo-fe/lambda-pdf-core.git"
+    "url": "git+https://github.com/das-buro-am-draht/lambda-pdf-core-test.git"
   },
   "keywords": [
     "lambda",
