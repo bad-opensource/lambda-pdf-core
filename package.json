@@ -1,8 +1,8 @@
 {
-  "name": "@das-buro-am-draht/lambda-pdf-core-test",
+  "name": "@das-buro-am-draht/lambda-pdf-core",
   "version": "1.0.0",
   "publishConfig": {
-    "registry": "https://github.com/das-buro-am-draht/lambda-pdf-core-test"
+    "registry": "https://github.com/das-buro-am-draht/lambda-pdf-core"
   },
   "files": [
     "src",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/das-buro-am-draht/lambda-pdf-core-test.git"
+    "url": "git+https://github.com/das-buro-am-draht/lambda-pdf-core.git"
   },
   "keywords": [
     "lambda",
@@ -29,7 +29,7 @@
     "@pdf-lib/fontkit": "0.0.4",
     "ajv": "^6.12.2",
     "atob": "^2.1.2",
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "chrome-aws-lambda": "^3.1.1",
     "handlebars": "^4.7.6",
     "pdf-lib": "^1.3.1",
