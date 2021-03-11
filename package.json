@@ -1,6 +1,6 @@
 {
   "name": "@das-buro-am-draht/lambda-pdf-core-test",
-  "version": "0.9.7",
+  "version": "1.0.0",
   "publishConfig": {
     "registry": "https://github.com/das-buro-am-draht/lambda-pdf-core-test"
   },

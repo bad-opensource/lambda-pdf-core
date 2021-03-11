@@ -66,12 +66,17 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 		const {param} = event.pathParameters || {};
 		const {queryStringParameters} = event;
 
-		const data = await fetchCb(param, queryStringParameters, event);
+		try {
+			const data = await fetchCb(param, queryStringParameters, event);
 
-		if (!data) {
-			return showError('No fetchResponse');
+			if (!data) {
+				return showError('No fetchResponse');
+			}
+			return {data};
 		}
-		return {data};
+		catch (err) {
+			return showError(err.message);
+		}
 	});
 
 	// Exported Lambda functions
