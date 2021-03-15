@@ -36,6 +36,16 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 		};
 	});
 
+	const returnDebug = addPassThroughHandling(templateData => {
+		return {
+			statusCode: 200,
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(templateData)
+		};
+	});
+
 	const parse = addPassThroughHandling(event => {
 		const parsedData = parseEventData(event, mocks);
 		if (!parsedData.data) {
@@ -91,10 +101,13 @@ module.exports = ({version, templates = {}, helpers, mocks, schema, patchDataBef
 			body: html
 		};
 	};
+
 	module.html = async event => pipe(warmUp, parse, validate, patchData, returnHtml)(event);
 	module.pdf = async event => pipe(warmUp, parse, validate, patchData, returnPdf)(event);
+	module.debug = async event => pipe(warmUp, parse, validate, patchData, returnDebug)(event);
 	module.fetchHtml = async event => pipe(warmUp, fetchData, validate, patchData, returnHtml)(event);
 	module.fetchPdf = async event => pipe(warmUp, fetchData, validate, patchData, returnPdf)(event);
+	module.fetchDebug = async event => pipe(warmUp, fetchData, validate, patchData, returnDebug)(event);
 
 	return module;
 };
