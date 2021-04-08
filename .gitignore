@@ -3,3 +3,4 @@
 .npmrc
 .DS_Store
 coverage/
+/compiled/
