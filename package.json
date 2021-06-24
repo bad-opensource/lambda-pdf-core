@@ -27,8 +27,11 @@
     "core",
     "puppeteer"
   ],
-  "author": "Franz Lacherbauer",
-  "license": "ISC",
+  "contributers": [
+    {"name": "Franz Lacherbauer", "email": "flr@dasburo.com"},
+    {"name": "Frank Schiemann", "email": "fs@dasburo.com"}
+]
+  "license": "MIT",
   "dependencies": {
     "@pdf-lib/fontkit": "0.0.4",
     "ajv": "^6.12.6",
