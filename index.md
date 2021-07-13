@@ -60,11 +60,11 @@ const handler = require('@bad-opensource/lambda-pdf-core')(
     module.fetchDebug = async event => pipe(warmUp, fetchData, validate, patchData, returnDebug)(event);
 ```
 
-***html** methods return HTML files for debugging in the browser
+- ***html** methods return HTML files for debugging in the browser
 
-***pdf** methods return PDF files
+- ***pdf** methods return PDF files
 
-***debug**  methods return the transformated renderdata JSON for debugging
+- ***debug**  methods return the transformated renderdata JSON for debugging
 
 #### internal pipeline methods
 
