@@ -1,37 +1,71 @@
-## Welcome to GitHub Pages
+# Lambda PDF Core
 
-You can use the [editor on GitHub](https://github.com/bad-opensource/lambda-pdf-core/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+this module provides all the basic function for PDF development an creation using handlebars templates, puppeteer and serverless.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+this module covered 2 usecases for PDF generation
 
-### Markdown
+1. PDFs with predifined JSON data
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+2. PDFs with data being fetched within the lambda function using a fetchCallback
 
-```markdown
-Syntax highlighted code block
+### Constructor Params
 
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+```javascript
+const handler = require('@bad-opensource/lambda-pdf-core')({version, templates = {}, helpers, mocks, schema, patchDataBeforeRendering, config, fetchCb})
 ```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+- **Version:** NPM Version
 
-### Jekyll Themes
+- **templates:** handlebars templates to be used for this PDFs
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/bad-opensource/lambda-pdf-core/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+- **helpers:** handlebars custom helper functions
 
-### Support or Contact
+- **mocks:** mockdata to be used in develop mode
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+- **schema:** data schame for validation before rendering
+
+- **patchDataBeforeRendering (optional):** custom transformation function enabling last DOM transformations (patchData callback)
+
+- **config:** basic configurations like margins and fallbacks
+
+- **fetchCb:** fetch data callback (optional)
+
+### 
+
+### Public methods of lambda-core instances ('handler')
+
+#### 1. methods using JSON data directly
+
+```javascript
+    module.html = async event => pipe(warmUp, parse, validate, patchData, returnHtml)(event);
+    module.pdf = async event => pipe(warmUp, parse, validate, patchData, returnPdf)(event);
+    module.debug = async event => pipe(warmUp, parse, validate, patchData, returnDebug)(event);
+```
+
+#### 2. methods for PDFs with async data fetching
+
+```javascript
+    module.fetchHtml = async event => pipe(warmUp, fetchData, validate, patchData, returnHtml)(event);
+    module.fetchPdf = async event => pipe(warmUp, fetchData, validate, patchData, returnPdf)(event);
+    module.fetchDebug = async event => pipe(warmUp, fetchData, validate, patchData, returnDebug)(event);
+```
+
+***html** methods return HTML files for debugging in the browser
+
+****pdf*** methods return PDF files
+
+****debug***  methods return the transformated renderdata JSON for debugging
+
+#### internal pipeline methods
+
+- **warmUp:** Internal method waiting for the lambda instance to be up and running
+
+- **parse:** Pass through handling of the given input data (event)
+  
+      – or – 
+  
+  **fetchData:** CallBack function for fetching data
+
+- **validate:** Validation of the given data using a provided schema
+
+- **patchData: **CallBack function (optional) for last HTML DOM manipulations (e.g. patching of image sources) before the final rendering 
