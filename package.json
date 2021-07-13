@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/das-buro-am-draht/lambda-pdf-core.git"
+    "url": "git+https://github.com/bad-opensource/lambda-pdf-core.git"
   },
   "keywords": [
     "lambda",
