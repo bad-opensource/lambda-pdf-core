@@ -1,8 +1,9 @@
 # Lambda PDF Core
+![](LamdaPDF.png)
 
 this module provides all the basic function for PDF development an creation using handlebars templates, puppeteer and serverless.
 
-this module covered 2 usecases for PDF generation
+It coveres 2 usecases for PDF generation
 
 1. PDFs with predifined JSON data
 
@@ -11,7 +12,16 @@ this module covered 2 usecases for PDF generation
 ### Constructor Params
 
 ```javascript
-const handler = require('@bad-opensource/lambda-pdf-core')({version, templates = {}, helpers, mocks, schema, patchDataBeforeRendering, config, fetchCb})
+const handler = require('@bad-opensource/lambda-pdf-core')(
+    { version,
+      templates = {},
+      helpers,
+      mocks,
+      schema,
+      patchDataBeforeRendering,
+      config,
+      fetchCb }
+    );
 ```
 
 - **Version:** NPM Version
@@ -52,20 +62,18 @@ const handler = require('@bad-opensource/lambda-pdf-core')({version, templates =
 
 ***html** methods return HTML files for debugging in the browser
 
-****pdf*** methods return PDF files
+***pdf** methods return PDF files
 
-****debug***  methods return the transformated renderdata JSON for debugging
+***debug**  methods return the transformated renderdata JSON for debugging
 
 #### internal pipeline methods
 
 - **warmUp:** Internal method waiting for the lambda instance to be up and running
 
 - **parse:** Pass through handling of the given input data (event)
-  
-      – or – 
-  
-  **fetchData:** CallBack function for fetching data
+    _or_
+- **fetchData:** CallBack function for fetching data
 
 - **validate:** Validation of the given data using a provided schema
 
-- **patchData: **CallBack function (optional) for last HTML DOM manipulations (e.g. patching of image sources) before the final rendering 
+- **patchData:** CallBack function (optional) for last HTML DOM manipulations (e.g. patching of image sources) before the final rendering 
