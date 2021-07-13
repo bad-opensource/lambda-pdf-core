@@ -9,7 +9,7 @@ module.exports = ({helpers = {}, partials = {}}) => {
 
 	const module = {};
 
-	module.getCompiledTemplate = (template, context) => {
+	module.getCompiledTemplate = (template='', context) => {
 		if (context) {
 			const compiled = Handlebars.compile(template);
 			return compiled(context);
