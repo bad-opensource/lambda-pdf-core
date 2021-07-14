@@ -32,7 +32,7 @@ const handler = require('@bad-opensource/lambda-pdf-core')(
 
 - **mocks:** mockdata to be used in develop mode
 
-- **schema:** data schame for validation before rendering
+- **schema:** data schema for validation before rendering
 
 - **patchDataBeforeRendering (optional):** custom transformation function enabling last DOM transformations (patchData callback)
 
@@ -40,7 +40,6 @@ const handler = require('@bad-opensource/lambda-pdf-core')(
 
 - **fetchCb:** fetch data callback (optional)
 
-### 
 
 ### Public methods of lambda-core instances ('handler')
 
