@@ -1,6 +1,8 @@
 # Lambda PDF Core
 **Authors:** Franz Lacherbauer ([@frnzetti](https://github.com/frnzetti)) and Frank Schiemann ([@aquastars](https://github.com/aquastars)) for Das Büro am Draht GmbH 2021
 
+**License:** Permission to use is granted under the terms of the *MIT License*.
+
 ![](https://bad-opensource.github.io/lambda-pdf-core/LamdaPDF.png)
 
 this module provides all the basic function for PDF development an creation using handlebars templates, puppeteer and serverless.
