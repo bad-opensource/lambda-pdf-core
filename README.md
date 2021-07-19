@@ -69,6 +69,8 @@ const handler = require('@bad-opensource/lambda-pdf-core')(
 
 - ***debug**  methods return the transformated renderdata JSON for debugging
 
+- ***check**  lambda function handler which renders the the currently deployed package version
+
 #### internal pipeline methods
 
 - **warmUp:** Internal method waiting for the lambda instance to be up and running
