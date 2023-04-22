@@ -46,7 +46,7 @@
     "puppeteer-core": "^8.0.0",
     "require-directory": "^2.1.1",
     "serverless": "^1.83.2",
-    "serverless-offline": "^5.12.0",
+    "serverless-offline": "^12.0.4",
     "serverless-plugin-warmup": "^4.9.0"
   },
   "devDependencies": {
