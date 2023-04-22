@@ -45,7 +45,7 @@
     "puppeteer": "^8.0.0",
     "puppeteer-core": "^8.0.0",
     "require-directory": "^2.1.1",
-    "serverless": "^1.83.2",
+    "serverless": "^3.30.1",
     "serverless-offline": "^5.12.0",
     "serverless-plugin-warmup": "^4.9.0"
   },
