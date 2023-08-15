@@ -1,8 +1,8 @@
 {
-  "name": "@bad-opensource/lambda-pdf-core",
-  "version": "0.1.0",
+  "name": "@oneaudi/lambda-pdf-core",
+  "version": "1.0.0",
   "publishConfig": {
-    "registry": "https://github.com/bad-opensource/lambda-pdf-core"
+    "registry": "https://github.com/marcoheinrich-sii/lambda-pdf-core"
   },
   "files": [
     "src",
@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bad-opensource/lambda-pdf-core.git"
+    "url": "git+https://github.com/marcoheinrich-sii/lambda-pdf-core"
   },
   "keywords": [
     "lambda",
@@ -25,12 +25,8 @@
   ],
   "contributers": [
     {
-      "name": "Franz Lacherbauer",
-      "email": "flr@dasburo.com"
-    },
-    {
-      "name": "Frank Schiemann",
-      "email": "fs@dasburo.com"
+      "name": "Marco Heinrich",
+      "email": "marco.heinrich@de.sii.group"
     }
   ],
   "license": "MIT",
